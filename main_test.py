@@ -46,11 +46,11 @@ if __name__ == '__main__':
         writer_ppo.writeheader()
         print(f'Created {filename}...')
         csv_writer = csv.writer(f, delimiter=',')
-        for i_ep in range(1):
+        for i_ep in range(100):
             score = 0
             state = test_env.reset()
 
-            for t in tqdm(range(10)):
+            for t in tqdm(range(500)):
                 action = agent.select_action(state)
                 state_, reward, done, die = test_env.step(action * np.array([2., 1., 1.]) + np.array([-1., 0., 0.]))
                 if args.render:

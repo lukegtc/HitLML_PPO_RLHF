@@ -46,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=0, metavar='N', help='random seed (default: 0)')
     parser.add_argument(
         '--log-interval', type=int, default=10, metavar='N', help='interval between training status logs (default: 10)')
-    parser.add_argument('--num-epochs', type=int, default=1,
+    parser.add_argument('--num-epochs', type=int, default=1000,
                         help='number of epochs to train (default: 1)')
     parser.add_argument('--num-states', type=int, default=200,
                         help='number of states to train (default: 1)')

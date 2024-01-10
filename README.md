@@ -12,6 +12,15 @@ the code, simply run the main_train.py file a number of times while changing the
 run the main_test.py file to plot the results on a single graph. The main_test.py file will produce a scatter 
 plot of the different test runs for each experiment, as well as an error bar plot of said results. The test file will also 
 print the mean and standard deviation of the results for each experiment.
-\\
+
 Note: Some example outputs have been added to the output folders for reference. Please remove these if you wish to make use
 of the code.
+Hyperparameters that were not changed:
+Training:
+- --num-epochs: 1000
+- --gamma: 0.99 (PPO discount)
+- --action-repeat: 8 (PPO training hyerparameter)
+- --batch-size: 128 (PPO training hyerparameter for the number of samples per batch)
+Testing:
+- Number of test runs per configuration: 100
+- Number of steps per test run: 500
