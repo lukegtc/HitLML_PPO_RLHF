@@ -6,6 +6,9 @@ import gymnasium as gym
 import torch
 import torch.nn as nn
 import cv2
+from tqdm import tqdm
+import csv
+import os
 #https://github.com/xtma/pytorch_car_caring/blob/master/train.py#L23
 
 
@@ -58,13 +61,6 @@ class Env():
     def render_me(self, render=True):
         self.env.render()
 
-    # @staticmethod
-    # def rgb2gray(rgb, norm=True):
-    #     gray = np.dot(rgb[..., :], [0.299, 0.587, 0.114])
-    #     if norm:
-    #         # normalize
-    #         gray = gray / 128. - 1.
-    #     return gray
     @staticmethod
     def rgb2gray(state):
         state = cv2.cvtColor(state, cv2.COLOR_BGR2GRAY)
@@ -91,7 +87,6 @@ class Net(nn.Module):
     """
     Actor-Critic Network for PPO
     """
-
     def __init__(self, img_stack):
         super(Net, self).__init__()
         self.cnn_base = nn.Sequential(  # input shape (4, 96, 96)
@@ -135,7 +130,6 @@ class Agent():
     """
     Agent for testing
     """
-
     def __init__(self, img_stack):
         self.net = Net(img_stack).float().to(device)
 
@@ -154,9 +148,6 @@ class Agent():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Test the PPO agent for the CarRacing-v0')
-    parser.add_argument('--action-repeat', type=int, default=16, metavar='N',
-                        help='repeat action in N frames (default: 12)')
-    parser.add_argument('--img-stack', type=int, default=16, metavar='N', help='stack N image in a state (default: 4)')
     parser.add_argument('--seed', type=int, default=0, metavar='N', help='random seed (default: 0)')
     parser.add_argument('--render',default=True, action='store_true', help='render the environment')
     args = parser.parse_args()
@@ -166,45 +157,20 @@ if __name__ == "__main__":
     if use_cuda:
         torch.cuda.manual_seed(args.seed)
 
-    name_set=[
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_20_num_rollouts_1000_rollout_steps_4_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_20_num_rollouts_1000_rollout_steps_4_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_20_num_rollouts_1000_rollout_steps_8_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_20_num_rollouts_1000_rollout_steps_8_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_num_rollouts_1000_rollout_steps_4_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_num_rollouts_1000_rollout_steps_4_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_num_rollouts_1000_rollout_steps_8_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_num_rollouts_1000_rollout_steps_8_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_8_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_2000_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_False_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_2000_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_True_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_8_rlhf_True_num_traj_3_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_4_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_4_rlhf_False_num_traj_2_final.pkl',
-        # 'ppo_net_params_ppo_img_stack_16_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_True_num_traj_3_final.pkl'
-        'ppo_net_params_ppo_img_stack_32_num_epochs_1000_rlhf_steps_10_num_rollouts_1000_rollout_steps_32_rlhf_False_num_traj_2_final.pkl'
-    ]
-    from tqdm import tqdm
-    import csv
-    # image_nums = [16,16,16,16,4,4,8,8,4,4,8,8,8,8]
-    image_nums = [32]
-    for i,name in enumerate(name_set):
-        img_stack = image_nums[i]
+    for i,name in enumerate(os.listdir('./trained_parameters')):
+        values = name.split('_')
+        param_dict = {values[i]: values[i + 1] for i in range(0, len(values), 2)}
+        img_stack = param_dict['imgstack']
         agent = Agent(img_stack)
-        # name = 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_200_num_rollouts_100_rollout_steps_8_rlhf_True.pkl'
-        # name = 'ppo_net_params_ppo_img_stack_4_num_epochs_500_rlhf_steps_10_num_rollouts_1000_rollout_steps_16_rlhf_False_final.pkl'
-        folder = 'test_results_3/'
-        name1='param_final/'+name
+        folder = 'test_results/'
+        name1='trained_parameters/'+name
         agent.load_param(name1)
-        env = Env(img_stack, 1)
+        test_env = Env(img_stack, 1)
 
         training_records = []
         running_score = 0
-        state = env.reset()
-        filename = folder + 'new_test_results_traj_len_500_' + name[:-4] + '.csv'
+        state = test_env.reset()
+        filename = folder + 'test_results' + name[:-4] + '.csv'
         f = open(filename, "a")
         writer_ppo = csv.DictWriter(f, fieldnames=["step", 'Reward'])
         writer_ppo.writeheader()
@@ -212,13 +178,13 @@ if __name__ == "__main__":
         csv_writer = csv.writer(f, delimiter=',')
         for i_ep in range(100):
             score = 0
-            state = env.reset()
+            state = test_env.reset()
 
             for t in tqdm(range(500)):
                 action = agent.select_action(state)
-                state_, reward, done, die = env.step(action * np.array([2., 1., 1.]) + np.array([-1., 0., 0.]))
+                state_, reward, done, die = test_env.step(action * np.array([2., 1., 1.]) + np.array([-1., 0., 0.]))
                 if args.render:
-                    env.render_me()
+                    test_env.render_me()
                 score += reward
                 state = state_
                 if done or die:
