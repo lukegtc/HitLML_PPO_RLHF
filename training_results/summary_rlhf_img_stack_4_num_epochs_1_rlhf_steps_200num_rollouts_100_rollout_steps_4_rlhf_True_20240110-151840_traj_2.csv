@@ -1,0 +1,2 @@
+epoch,Loss,Reward
+0,"tensor(6.7016, device='cuda:0', dtype=torch.float64, grad_fn=<MeanBackward0>)",-0.1741433021806844
